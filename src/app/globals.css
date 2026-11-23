@@ -1,0 +1,515 @@
+@import "tailwindcss";
+
+/* ───────────────────────── Design tokens ───────────────────────── */
+@theme {
+  --color-ink: #060608;
+  --color-ink-2: #0a0a0e;
+  --color-surface: #0e0e14;
+  --color-surface-2: #13131b;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+  --color-fg: #ededf0;
+  --color-muted: #a1a1ad;
+  --color-subtle: #7b7b87;
+  --color-accent: #7c8cff;
+  --color-accent-2: #a78bfa;
+  --color-accent-3: #5eead4;
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --breakpoint-xs: 26rem;
+}
+
+/* ───────────────────────── Base ───────────────────────── */
+:root {
+  color-scheme: dark;
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --nav-h: 4.5rem;
+}
+
+html {
+  /* Background lives on <html> so the fixed WebGL layer (z-index:-1)
+     can sit above it and below the content, letting the hero name
+     blend over the 3D core with mix-blend-mode. */
+  background: var(--color-ink);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scrollbar-color: #2a2a33 transparent;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  background: transparent;
+  font-family: var(--font-sans);
+  overflow-x: clip;
+  min-height: 100svh;
+}
+
+::selection {
+  background: rgb(124 140 255 / 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Component classes live in the `components` layer so Tailwind utilities
+   (e.g. `hidden`, `h-11!`) can always override them. */
+@layer components {
+.container-x {
+  width: 100%;
+  max-width: 96rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.font-serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-subtle);
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-line-strong) 15%, var(--color-line-strong) 85%, transparent);
+}
+}
+
+/* ───────────────────────── Grain ───────────────────────── */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 7s steps(8) infinite;
+}
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-6%, 4%); }
+  40% { transform: translate(4%, -8%); }
+  60% { transform: translate(-8%, -2%); }
+  80% { transform: translate(6%, 6%); }
+}
+
+/* ───────────────────────── WebGL layer ───────────────────────── */
+.scene-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out-expo);
+}
+.scene-layer.is-visible {
+  transition: none;
+}
+/* CSS "poster" of the chrome core, shown until (or instead of) live WebGL.
+   Lit like the 3D studio: key strip above, blue rim left, violet right, teal below. */
+.scene-poster {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.scene-fallback {
+  position: absolute;
+  top: 49%;
+  left: 71%;
+  width: min(38vw, 34rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background:
+    radial-gradient(ellipse 30% 14% at 38% 24%, rgb(255 255 255 / 0.95), transparent 70%),
+    radial-gradient(ellipse 50% 22% at 50% 6%, rgb(255 255 255 / 0.7), transparent 70%),
+    radial-gradient(circle at 8% 52%, rgb(124 140 255 / 0.9), transparent 42%),
+    radial-gradient(circle at 94% 60%, rgb(177 140 255 / 0.85), transparent 40%),
+    radial-gradient(ellipse 40% 18% at 50% 97%, rgb(94 234 212 / 0.55), transparent 70%),
+    radial-gradient(circle at 45% 42%, #1c1e29 0%, #0b0c12 62%, #030305 100%);
+  box-shadow:
+    0 0 140px 20px rgb(109 124 255 / 0.16),
+    inset 0 0 40px rgb(0 0 0 / 0.6);
+  animation: poster-float 9s ease-in-out infinite;
+}
+.scene-fallback::after {
+  /* the inner orbital ring */
+  content: "";
+  position: absolute;
+  inset: -28%;
+  border-radius: 9999px;
+  border: 1px solid rgb(154 166 255 / 0.4);
+  transform: rotateX(72deg) rotateZ(-12deg);
+}
+@keyframes poster-float {
+  0%, 100% { transform: translate(-50%, -50%); }
+  50% { transform: translate(-50%, calc(-50% - 10px)); }
+}
+@media (max-width: 767px) {
+  .scene-fallback { left: 50%; top: 32%; width: 46vw; }
+}
+
+/* Ambient atmosphere behind everything */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 78% 18%, rgb(124 140 255 / 0.10), transparent 60%),
+    radial-gradient(50rem 40rem at 10% 90%, rgb(167 139 250 / 0.06), transparent 60%);
+}
+
+/* ───────────────────────── Intro / readiness ───────────────────────── */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  background: var(--color-ink);
+}
+html.js .intro { display: grid; }
+html.no-intro .intro { display: none; }
+
+/* Hero entrance: characters rise from a mask once the page is ready. */
+.char-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+.char {
+  display: inline-block;
+  will-change: transform;
+}
+html.js .char {
+  transform: translate3d(0, 105%, 0);
+}
+html.js.is-ready .char {
+  transform: none;
+  transition: transform 1.3s var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 45ms + 80ms);
+}
+
+/* Blur-and-rise entrance. Starts faintly painted (not opacity 0) so the text
+   is a valid LCP candidate from first paint; the intro curtain hides it anyway. */
+html.js [data-enter] {
+  opacity: 0.08;
+  filter: blur(10px);
+  transform: translate3d(0, 18px, 0);
+}
+html.js.is-ready [data-enter] {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+  transition: opacity 1s var(--ease-out-expo), filter 1s var(--ease-out-expo), transform 1.2s var(--ease-out-expo);
+  transition-delay: calc(var(--d, 0) * 1ms + 300ms);
+}
+
+/* ───────────────────────── Scroll reveals ───────────────────────── */
+html.js [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition: opacity 1s var(--ease-out-expo), transform 1.2s var(--ease-out-expo);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+html.js [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Word-mask heading reveal */
+.word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.word {
+  display: inline-block;
+}
+html.js [data-split] .word {
+  transform: translate3d(0, 110%, 0);
+  transition: transform 1.1s var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 55ms);
+}
+html.js [data-split].is-in .word {
+  transform: none;
+}
+
+/* ───────────────────────── Marquee ───────────────────────── */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+@keyframes marquee {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ───────────────────────── Buttons ───────────────────────── */
+@layer components {
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 3rem;
+  padding-inline: 1.35rem;
+  border-radius: 9999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  isolation: isolate;
+  overflow: hidden;
+  transition: color 0.4s var(--ease-out-expo), border-color 0.4s, background-color 0.4s;
+}
+.btn-primary {
+  background: var(--color-fg);
+  color: var(--color-ink);
+}
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, var(--color-accent), var(--color-accent-2));
+  transform: translateY(101%);
+  transition: transform 0.55s var(--ease-out-expo);
+}
+.btn-primary:hover { color: #fff; }
+.btn-primary:hover::before { transform: none; }
+.btn-ghost {
+  border: 1px solid var(--color-line-strong);
+  color: var(--color-fg);
+  background: rgb(255 255 255 / 0.02);
+  backdrop-filter: blur(8px);
+}
+.btn-ghost:hover {
+  border-color: rgb(255 255 255 / 0.35);
+  background: rgb(255 255 255 / 0.06);
+}
+.btn .btn-icon {
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.btn:hover .btn-icon { transform: translate(2px, -2px); }
+
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 100% 100%;
+  transition: background-size 0.6s var(--ease-out-expo);
+}
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
+  background-position: 0% 100%;
+}
+
+/* ───────────────────────── Glass ───────────────────────── */
+.glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* ───────────────────────── Project cards ───────────────────────── */
+.project-card {
+  --accent: var(--color-accent);
+  position: relative;
+  background:
+    radial-gradient(70rem 30rem at 100% 0%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%),
+    linear-gradient(180deg, #0f0f15, #0a0a0e);
+  border: 1px solid var(--color-line);
+  border-radius: 1.25rem;
+  transform-origin: 50% 0%;
+}
+.project-card .visual-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-line);
+  background: radial-gradient(120% 90% at 70% 10%, color-mix(in oklab, var(--accent) 16%, #0b0b10), #08080b 70%);
+}
+.project-card .visual-frame > * {
+  transition: transform 1.2s var(--ease-out-expo);
+}
+.project-card:hover .visual-frame > * {
+  transform: scale(1.025);
+}
+}
+
+/* ───────────────────────── Visual micro-animations ───────────────────────── */
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes travel {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+@keyframes needle {
+  0%, 100% { transform: rotate(-38deg); }
+  50% { transform: rotate(14deg); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+@keyframes node-float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(var(--fx, 2px), var(--fy, -4px)); }
+}
+@keyframes dash {
+  to { stroke-dashoffset: -24; }
+}
+@keyframes scrollcue {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
+/* ───────────────────────── Heatmap ───────────────────────── */
+.heatmap rect {
+  transition: opacity 0.2s;
+}
+.heatmap svg:hover rect {
+  opacity: 0.55;
+}
+.heatmap svg:hover rect:hover {
+  opacity: 1;
+  stroke: rgb(255 255 255 / 0.7);
+  stroke-width: 1;
+}
+
+/* ───────────────────────── Dialog ───────────────────────── */
+dialog.case-study {
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: hidden;
+}
+dialog.case-study::backdrop {
+  background: rgb(4 4 6 / 0.6);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out-expo);
+}
+dialog.case-study[data-state="open"]::backdrop { opacity: 1; }
+dialog.case-study .sheet {
+  transform: translate3d(0, 6%, 0);
+  opacity: 0;
+  transition: transform 0.7s var(--ease-out-expo), opacity 0.5s var(--ease-out-expo);
+}
+dialog.case-study[data-state="open"] .sheet {
+  transform: none;
+  opacity: 1;
+}
+
+/* ───────────────────────── Cursor ───────────────────────── */
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -1.125rem 0 0 -1.125rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  pointer-events: none;
+  mix-blend-mode: difference;
+  display: grid;
+  place-items: center;
+  transition: width 0.45s var(--ease-out-expo), height 0.45s var(--ease-out-expo), margin 0.45s var(--ease-out-expo),
+    background-color 0.45s, border-color 0.45s, opacity 0.3s;
+}
+.cursor-ring[data-active="true"] {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: -2.25rem 0 0 -2.25rem;
+  background: #fff;
+  border-color: #fff;
+}
+.cursor-ring span {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.cursor-ring[data-active="true"] span { opacity: 1; }
+
+/* ───────────────────────── Reduced motion ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  html.js [data-enter] {
+    filter: none !important;
+  }
+  html.js .char,
+  html.js [data-enter],
+  html.js [data-reveal],
+  html.js [data-split] .word {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .grain { animation: none; }
+}
